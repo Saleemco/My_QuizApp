@@ -3,10 +3,11 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-require_once __DIR__ . '/../includes/db.php';
-require_once __DIR__ . '/../includes/session.php';
+require_once __DIR__ . '/../includes/db.php';      // PDO connection
+require_once __DIR__ . '/../includes/session.php'; // session + CSRF helpers
 
-    generateCSRFToken();
+// Ensure CSRF token exists
+$csrf_token = generateCSRFToken();
 
 $errors = [];
 $identifier = '';
@@ -16,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors['general'] = 'Invalid request. Please try again.';
     } else {
         $identifier = trim($_POST['identifier']);
-        $password = $_POST['password'];
+        $password   = $_POST['password'];
 
         if (empty($identifier)) {
             $errors['identifier'] = 'Email or Matric Number is required';
@@ -28,70 +29,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($errors)) {
             $user = null;
 
-            if (filter_var($identifier, FILTER_VALIDATE_EMAIL)) {
-                // Login by email
-                $stmt = $conn->prepare("SELECT id, fullname, email, matric_number, password, role 
-                                        FROM users WHERE email = ?");
-                $stmt->bind_param("s", $identifier);
-            } else {
-                // Login by matric number (students only)
-                $stmt = $conn->prepare("SELECT id, fullname, email, matric_number, password, role 
-                                        FROM users WHERE matric_number = ? AND role = 'student'");
-                $stmt->bind_param("s", $identifier);
+            try {
+                if (filter_var($identifier, FILTER_VALIDATE_EMAIL)) {
+                    // Login by email
+                    $stmt = $conn->prepare("SELECT id, fullname, email, matric_number, password, role 
+                                             FROM users WHERE email = :identifier");
+                    $stmt->execute([':identifier' => $identifier]);
+                } else {
+                    // Login by matric number (students only)
+                    $stmt = $conn->prepare("SELECT id, fullname, email, matric_number, password, role 
+                                             FROM users WHERE matric_number = :identifier AND role = 'student'");
+                    $stmt->execute([':identifier' => $identifier]);
+                }
+
+                $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($user && password_verify($password, $user['password'])) {
+                    session_regenerate_id(true);
+
+                    $_SESSION['user_id']       = $user['id'];
+                    $_SESSION['fullname']      = $user['fullname'];
+                    $_SESSION['role']          = $user['role'];
+                    $_SESSION['email']         = $user['email'];
+                    $_SESSION['matric_number'] = $user['matric_number'];
+
+                    generateCSRFToken();
+
+                    // Redirect by role
+                    if ($user['role'] === 'admin') {
+                        header('Location: ../admin/dashboard.php');
+                    } elseif ($user['role'] === 'lecturer') {
+                        header('Location: ../lecturer/dashboard.php');
+                    } else {
+                        header('Location: ../student/dashboard.php');
+                    }
+                    exit;
+                } else {
+                    $errors['general'] = 'Invalid email/matric number or password';
+                }
+            } catch (PDOException $e) {
+                $errors['general'] = "❌ Database error: " . $e->getMessage();
             }
-
-            $stmt->execute();
-            $result = $stmt->get_result();
-            if ($result->num_rows === 1) {
-                $user = $result->fetch_assoc();
-            }
-            $stmt->close();
-
-            // if ($user && password_verify($password, $user['password'])) {
-            //     session_regenerate_id(true);
-
-            //     $_SESSION['user_id'] = $user['id'];
-            //     $_SESSION['username'] = $user['fullname'];
-            //     $_SESSION['role'] = $user['role'];
-            //     $_SESSION['email'] = $user['email'];
-            //     $_SESSION['matric_number'] = $user['matric_number'];
-
-            //     generateCSRFToken();
-
-            //     // Redirect by role
-            //     if ($user['role'] === 'admin') {
-            //         header('Location: ../admin/dashboard.php');
-            //     } elseif ($user['role'] === 'lecturer') {
-            //         header('Location: ../lecturer/dashboard.php');
-            //     } else {
-            //         header('Location: ../student/dashboard.php');
-            //     }
-            //     exit;
-            // } else {
-            //     $errors['general'] = 'Invalid email/matric number or password';
-            // }
-            if ($user && password_verify($password, $user['password'])) {
-    session_regenerate_id(true);
-
-    $_SESSION['user_id'] = $user['id'];
-    $_SESSION['fullname'] = $user['fullname']; // ✅ fixed
-    $_SESSION['role'] = $user['role'];
-    $_SESSION['email'] = $user['email'];
-    $_SESSION['matric_number'] = $user['matric_number'];
-
-    generateCSRFToken();
-
-    // Redirect by role
-    if ($user['role'] === 'admin') {
-        header('Location: ../admin/dashboard.php');
-    } elseif ($user['role'] === 'lecturer') {
-        header('Location: ../lecturer/dashboard.php');
-    } else {
-        header('Location: ../student/dashboard.php');
-    }
-    exit;
-}
-
         }
     }
 }
@@ -125,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
 
         <form method="POST" class="space-y-5">
-            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
 
             <!-- Email / Matric -->
             <div>
@@ -161,3 +139,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 </body>
 </html>
+

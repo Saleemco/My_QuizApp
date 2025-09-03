@@ -1,6 +1,6 @@
 <?php
-require_once __DIR__ . '/../includes/session.php'; // must come first (defines generateCSRFToken)
-require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/session.php'; // must come first
+require_once __DIR__ . '/../includes/db.php';     // sets up $conn (PDO)
 
 // Ensure CSRF token exists
 $csrf_token = generateCSRFToken();
@@ -22,44 +22,47 @@ $message = "";
 
 // Handle registration form
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // ✅ Verify CSRF token first
+    // ✅ Verify CSRF token
     if (!verifyCSRFToken($_POST['csrf_token'] ?? '')) {
         $message = "❌ Invalid CSRF token. Please refresh the page.";
     } else {
-        $fullname = mysqli_real_escape_string($conn, $_POST['fullname']);
-        // $email    = mysqli_real_escape_string($conn, $_POST['email']);
-        $email = isset($_POST['email']) && !empty(trim($_POST['email'])) 
-    ? mysqli_real_escape_string($conn, $_POST['email']) 
-    : null;
-
+        $fullname = trim($_POST['fullname']);
+        $email    = isset($_POST['email']) && !empty(trim($_POST['email'])) ? trim($_POST['email']) : null;
         $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
-        $role     = mysqli_real_escape_string($conn, $_POST['role']);
-        $matric   = isset($_POST['matric_number']) ? mysqli_real_escape_string($conn, $_POST['matric_number']) : null;
-        $lecturer_id = ($role === 'student' && !empty($_POST['lecturer_id'])) 
-                        ? (int) $_POST['lecturer_id'] 
-                        : "NULL";
+        $role     = $_POST['role'] ?? 'student';
+        $matric   = $_POST['matric_number'] ?? null;
+        $lecturer_id = ($role === 'student' && !empty($_POST['lecturer_id'])) ? (int) $_POST['lecturer_id'] : null;
 
         // Validation
         if ($role === 'student' && empty($matric)) {
             $message = "⚠️ Matric Number is required for students.";
-        } elseif ($role === 'student' && $lecturer_id === "NULL") {
+        } elseif ($role === 'student' && empty($lecturer_id)) {
             $message = "⚠️ Please select a lecturer.";
         } else {
-            // Prevent duplicate email
-            $check = mysqli_query($conn, "SELECT id FROM users WHERE email='$email'");
-            if (mysqli_num_rows($check) > 0) {
-                $message = "⚠️ Email already exists!";
-            } else {
-                // Insert user
-                $sql = "INSERT INTO users (fullname, email, password, role, matric_number, lecturer_id) 
-                        VALUES ('$fullname', '$email', '$password', '$role', " . 
-                        ($matric ? "'$matric'" : "NULL") . ", " . 
-                        ($lecturer_id !== "NULL" ? $lecturer_id : "NULL") . ")";
-                if (mysqli_query($conn, $sql)) {
-                    $message = "✅ Registration successful! You can now log in.";
+            try {
+                // Prevent duplicate email
+                $stmt = $conn->prepare("SELECT id FROM users WHERE email = :email");
+                $stmt->execute([':email' => $email]);
+                if ($stmt->fetch()) {
+                    $message = "⚠️ Email already exists!";
                 } else {
-                    $message = "❌ Error: " . mysqli_error($conn);
+                    // Insert user
+                    $sql = "INSERT INTO users (fullname, email, password, role, matric_number, lecturer_id) 
+                            VALUES (:fullname, :email, :password, :role, :matric, :lecturer_id)";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->execute([
+                        ':fullname'    => $fullname,
+                        ':email'       => $email,
+                        ':password'    => $password,
+                        ':role'        => $role,
+                        ':matric'      => $matric,
+                        ':lecturer_id' => $lecturer_id
+                    ]);
+
+                    $message = "✅ Registration successful! You can now log in.";
                 }
+            } catch (PDOException $e) {
+                $message = "❌ Database error: " . $e->getMessage();
             }
         }
     }
@@ -151,8 +154,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <select name="lecturer_id" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500">
                     <option value="">-- Choose Lecturer --</option>
                     <?php
-                    $lecturers = mysqli_query($conn, "SELECT id, fullname FROM users WHERE role='lecturer'");
-                    while ($lec = mysqli_fetch_assoc($lecturers)) {
+                    $lecturers = $conn->query("SELECT id, fullname FROM users WHERE role = 'lecturer'");
+                    while ($lec = $lecturers->fetch(PDO::FETCH_ASSOC)) {
                         echo "<option value='{$lec['id']}'>{$lec['fullname']}</option>";
                     }
                     ?>
@@ -175,3 +178,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </script>
 </body>
 </html>
+
