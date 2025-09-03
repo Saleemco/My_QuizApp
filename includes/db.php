@@ -1,25 +1,3 @@
-<!-- 
-<?php
-//Database configuration
-// $servername = "localhost";
-// $username = "root";
-// $password = "";
-// $dbname = "quiz_appdb";
-
-// // Create connection
-// $conn = mysqli_connect($servername, $username, $password, $dbname);
-
-// // Check connection
-// if (!$conn) {
-//     die("Connection failed: " . mysqli_connect_error());
-// }
-
-// // Set charset to utf8
-// mysqli_set_charset($conn, "utf8");
-
-
-?> -->
-
 <?php
 // Database configuration (from Render connection string)
 $host = "dpg-d2s6abur433s73fb6k40-a";
@@ -41,8 +19,8 @@ try {
     // Optional: set charset to UTF8
     $conn->exec("SET NAMES 'UTF8'");
     
-    // echo "✅ Connected to Render PostgreSQL successfully!"; // Debug only
+    // ❌ Removed debug echo — never output inside db.php
 } catch (PDOException $e) {
+    // Use exception instead of echo to avoid output before headers
     die("❌ Database connection failed: " . $e->getMessage());
-}
-?>
+

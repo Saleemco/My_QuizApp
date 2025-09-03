@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
         libpq-dev \
         zip \
         unzip \
-    && docker-php-ext-install pdo pdo_pgsql pgsql \
+    && docker-php-ext-install pdo_pgsql pgsql \
     && docker-php-ext-enable pdo_pgsql pgsql
 
 # Enable Apache rewrite
@@ -27,4 +27,3 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
 
 EXPOSE 80
-
