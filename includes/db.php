@@ -20,7 +20,9 @@ try {
     $conn->exec("SET NAMES 'UTF8'");
     
     // ❌ Removed debug echo — never output inside db.php
+
 } catch (PDOException $e) {
     // Use exception instead of echo to avoid output before headers
     die("❌ Database connection failed: " . $e->getMessage());
+}
 
