@@ -1,4 +1,11 @@
 <?php
+// 🚨 IMPORTANT: Make sure no whitespace or HTML comes before this line
+
+// Check if headers were already sent (debug helper)
+if (headers_sent($file, $line)) {
+    die("⚠️ Headers already sent in $file on line $line");
+}
+
 // Start session with secure settings
 if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.cookie_httponly', 1);
@@ -53,7 +60,7 @@ function getCurrentUser(): ?array {
     }
     return [
         'id'       => $_SESSION['user_id'],
-        'fullname' => $_SESSION['fullname'] ?? '',  // ✅ fixed to use fullname
+        'fullname' => $_SESSION['fullname'] ?? '',
         'role'     => $_SESSION['role'] ?? ''
     ];
 }
