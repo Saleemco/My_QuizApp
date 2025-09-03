@@ -37,7 +37,7 @@ $stats['avg_score'] = round($result->fetch_assoc()['avg_score'] ?? 0, 1);
 // Recent activities
 $recent_activities = [];
 $result = $conn->query("
-    SELECT u.name, qa.score, qa.total_questions, qa.started_at, 'quiz_attempt' as type
+    SELECT u.fullname, qa.score, qa.total_questions, qa.started_at, 'quiz_attempt' as type
     FROM quiz_attempts qa
     JOIN users u ON qa.user_id = u.id
     ORDER BY qa.started_at DESC
@@ -50,7 +50,7 @@ while ($row = $result->fetch_assoc()) {
 // Top performers
 $top_performers = [];
 $result = $conn->query("
-    SELECT u.name, u.role, MAX(qa.percentage) as best_score, COUNT(qa.id) as attempts
+    SELECT u.fullname, u.role, MAX(qa.percentage) as best_score, COUNT(qa.id) as attempts
     FROM users u
     LEFT JOIN quiz_attempts qa ON u.id = qa.user_id
     WHERE u.role = 'student'
@@ -135,7 +135,7 @@ while ($row = $result->fetch_assoc()) {
             <div class="flex flex-col lg:flex-row justify-between items-center">
                 <div class="text-white mb-6 lg:mb-0">
                     <h1 class="text-4xl font-bold mb-2">Admin Dashboard</h1>
-                    <p class="text-xl opacity-90">Welcome back, <?= htmlspecialchars($current_user['name']) ?>!</p>
+                    <p class="text-xl opacity-90">Welcome back, <?= htmlspecialchars($current_user['fullname']) ?>!</p>
                     <p class="opacity-75">Manage your quiz platform with powerful tools</p>
                 </div>
 
@@ -269,7 +269,7 @@ while ($row = $result->fetch_assoc()) {
                                     <i class="fas fa-user-graduate text-white"></i>
                                 </div>
                                 <div class="flex-1">
-                                    <p class="font-semibold text-gray-800"><?= htmlspecialchars($activity['name']) ?></p>
+                                    <p class="font-semibold text-gray-800"><?= htmlspecialchars($activity['fullname']) ?></p>
                                     <p class="text-sm text-gray-600">
                                         Completed quiz: <?= $activity['score'] ?>/<?= $activity['total_questions'] ?>
                                         (<?= round(($activity['score'] / $activity['total_questions']) * 100) ?>%)
@@ -305,7 +305,7 @@ while ($row = $result->fetch_assoc()) {
                                     <?= $index + 1 ?>
                                 </div>
                                 <div class="flex-1">
-                                    <p class="font-semibold text-gray-800"><?= htmlspecialchars($performer['name']) ?></p>
+                                    <p class="font-semibold text-gray-800"><?= htmlspecialchars($performer['fullname']) ?></p>
                                     <p class="text-sm text-gray-600">
                                         Best Score: <?= $performer['best_score'] ?? 0 ?>%
                                         (<?= $performer['attempts'] ?> attempts)

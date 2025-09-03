@@ -48,7 +48,8 @@ $stats['avg_score'] = round($result->get_result()->fetch_assoc()['avg_score'] ??
 // Recent student activities
 $recent_activities = [];
 $result = $conn->prepare("
-    SELECT u.name, qa.score, qa.total_questions, qa.percentage, qa.started_at
+    SELECT u.fullname, qa.score, qa.total_questions, qa.percentage, qa.started_at
+
     FROM quiz_attempts qa
     JOIN users u ON qa.user_id = u.id
     WHERE u.lecturer_id = ?
@@ -65,7 +66,7 @@ while ($row = $result_data->fetch_assoc()) {
 // Top performing students
 $top_students = [];
 $result = $conn->prepare("
-    SELECT u.name, u.email, MAX(qa.percentage) as best_score, COUNT(qa.id) as attempts,
+    SELECT u.fullname, u.email, MAX(qa.percentage) as best_score, COUNT(qa.id) as attempts,
            AVG(qa.percentage) as avg_score
     FROM users u
     LEFT JOIN quiz_attempts qa ON u.id = qa.user_id
@@ -154,7 +155,7 @@ while ($row = $result_data->fetch_assoc()) {
             <div class="flex flex-col lg:flex-row justify-between items-center">
                 <div class="text-white mb-6 lg:mb-0">
                     <h1 class="text-4xl font-bold mb-2">Lecturer Dashboard</h1>
-                    <p class="text-xl opacity-90">Welcome back, <?= htmlspecialchars($current_user['name']) ?>!</p>
+                    <p class="text-xl opacity-90">Welcome back, <?= htmlspecialchars($_SESSION['fullname']) ?>!</p>
                     <p class="opacity-75">Manage your students and track their progress</p>
                 </div>
 
@@ -285,7 +286,7 @@ while ($row = $result_data->fetch_assoc()) {
                                     <i class="fas fa-user-graduate text-white"></i>
                                 </div>
                                 <div class="flex-1">
-                                    <p class="font-semibold text-gray-800"><?= htmlspecialchars($activity['name']) ?></p>
+                                    <p class="font-semibold text-gray-800"><?= htmlspecialchars($activity['fullname']) ?></p>
                                     <p class="text-sm text-gray-600">
                                         Quiz Score: <?= $activity['score'] ?>/<?= $activity['total_questions'] ?>
                                         (<?= round($activity['percentage']) ?>%)
@@ -336,7 +337,7 @@ while ($row = $result_data->fetch_assoc()) {
                                     <?= $index + 1 ?>
                                 </div>
                                 <div class="flex-1">
-                                    <p class="font-semibold text-gray-800"><?= htmlspecialchars($student['name']) ?></p>
+                                    <p class="font-semibold text-gray-800"><?= htmlspecialchars($student['fullname']) ?></p>
                                     <p class="text-sm text-gray-600">
                                         Best: <?= $student['best_score'] ?? 0 ?>% |
                                         Avg: <?= round($student['avg_score'] ?? 0, 1) ?>% |

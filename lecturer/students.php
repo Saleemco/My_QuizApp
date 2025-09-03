@@ -9,7 +9,7 @@ $lecturer_id = $_SESSION['user_id'];
 
 // Get students for the current lecturer
 $students = [];
-$stmt = $conn->prepare("SELECT id, name, email, matric_number FROM users WHERE lecturer_id = ? AND role = 'student' ORDER BY name");
+$stmt = $conn->prepare("SELECT id, fullname, email, matric_number FROM users WHERE lecturer_id = ? AND role = 'student' ORDER BY fullname");
 $stmt->bind_param("i", $lecturer_id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -84,27 +84,25 @@ $stmt->close();
     </div>
 
     <div class="container mx-auto px-4 max-w-6xl pb-16">
-            
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Matric Number</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <?php foreach ($students as $student): ?>
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Matric Number</th>
+                            <td class="px-6 py-4 whitespace-nowrap"><?= htmlspecialchars($student['fullname']) ?></td>
+                            <td class="px-6 py-4 whitespace-nowrap"><?= htmlspecialchars($student['email'] ?? '') ?></td>
+                            <td class="px-6 py-4 whitespace-nowrap"><?= htmlspecialchars($student['matric_number'] ?? '') ?></td>
                         </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <?php foreach ($students as $student): ?>
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap"><?= htmlspecialchars($student['name']) ?></td>
-                                <td class="px-6 py-4 whitespace-nowrap"><?= htmlspecialchars($student['email'] ?? '') ?></td>
-                                <td class="px-6 py-4 whitespace-nowrap"><?= htmlspecialchars($student['matric_number'] ?? '') ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
         </div>
     </div>
 </body>

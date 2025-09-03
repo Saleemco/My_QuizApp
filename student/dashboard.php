@@ -169,7 +169,7 @@ $available_questions = $result->get_result()->fetch_assoc()['count'];
         <div class="container mx-auto px-6">
             <div class="flex flex-col lg:flex-row justify-between items-center">
                 <div class="text-white mb-6 lg:mb-0">
-                    <h1 class="text-4xl font-bold mb-2">Welcome back, <?= htmlspecialchars($current_user['name']) ?>!</h1>
+                    <h1 class="text-4xl font-bold mb-2">Welcome back, <?= htmlspecialchars($current_user['fullname']) ?>!</h1>
                     <p class="text-xl opacity-90">Ready to challenge yourself today?</p>
                     <p class="opacity-75">Track your progress and compete with peers</p>
                 </div>

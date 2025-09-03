@@ -62,7 +62,7 @@ if (isset($_POST['delete_question'])) {
 // Get questions based on user role
 $questions = [];
 if (isAdmin()) {
-    $sql = "SELECT q.*, u.name as lecturer_name FROM questions q JOIN users u ON q.lecturer_id = u.id ORDER BY q.id DESC";
+    $sql = "SELECT q.*, u.fullname as lecturer_name FROM questions q JOIN users u ON q.lecturer_id = u.id ORDER BY q.id DESC";
     $result = $conn->query($sql);
 } else { // Lecturer
     $sql = "SELECT * FROM questions WHERE lecturer_id = ? ORDER BY id DESC";
